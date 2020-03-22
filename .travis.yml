@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t yataras/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true yataras/react-test npm test
+
+after_success:
+  - docker build -t yataras/multi-client ./client
+  - docker build -t yataras/multi-nginx ./nginx
+  - docker build -t yataras/multi-server ./server
+  - docker build -t yataras/multi-worker ./worker
+
+  # login to the CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to the docker hub
+  - docker push yataras/multi-client
+  - docker push yataras/multi-nginx
+  - docker push yataras/multi-server
+  - docker push yataras/multi-worker
